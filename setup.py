@@ -101,6 +101,8 @@ def rocm_extension() -> tuple[list, dict]:
 
     print("Building ROCM extensions")
     hipify_wrapper()
+    global ENABLE_CXX11_ABI
+    flag_cxx_abi = "-D_GLIBCXX_USE_CXX11_ABI=1" if ENABLE_CXX11_ABI else "-D_GLIBCXX_USE_CXX11_ABI=0"
     hip_sources = [
         "csrc/pybind_hip.cpp",  # Use the hipified pybind
         "csrc/mem_kernels.hip",
@@ -108,6 +110,8 @@ def rocm_extension() -> tuple[list, dict]:
         "csrc/ac_enc.hip",
         "csrc/ac_dec.hip",
         "csrc/pos_kernels.hip",
+        "csrc/mem_alloc_hip.cpp",   # <-- defines alloc_pinned_ptr(...)
+        "csrc/utils_hip.cpp",       # defines get_gpu_pci_bus_id(int)
     ]
     # For HIP, we generally use CppExtension and let hipcc handle things.
     # Ensure CXX environment variable is set to hipcc when running this build.
@@ -126,6 +130,7 @@ def rocm_extension() -> tuple[list, dict]:
                     # '--offload-arch=gfx942' # (replace with your target arch)
                     # '-x hip' # Sometimes needed to explicitly treat files as HIP
                 ],
+                "cxx": ["-O3", flag_cxx_abi],
                 # No 'nvcc' key for hipcc with CppExtension
             },
             # You might need to specify include paths for ROCm if not found
@@ -137,6 +142,12 @@ def rocm_extension() -> tuple[list, dict]:
                 os.path.join(os.environ.get("ROCM_PATH", "/opt/rocm"), "lib")
             ],
             # libraries=['amdhip64'] # Or other relevant HIP libs if needed
+            libraries=['amdhip64'],
+            extra_link_args=[
+                f"-Wl,-rpath,{os.path.join(os.path.dirname(__import__('torch').__file__), 'lib')}",
+                "-Wl,-rpath,$ORIGIN",
+                "-Wl,--no-as-needed",
+            ],
             define_macros=define_macros,
         )
     ]
