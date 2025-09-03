@@ -67,6 +67,18 @@ Works on Linux NVIDIA GPU platform.
 
 More [detailed installation instructions](https://docs.lmcache.ai/getting_started/installation) are available in the docs, particularly if you are not using the latest stable version of vllm or using another serving engine with different dependencies. Any "undefined symbol" or torch mismatch versions can be resolved in the documentation. 
 
+## Install on Rocm
+
+To use on MI300, use the following instruction on any officially released vllm docker image: 
+```bash
+PYTORCH_ROCM_ARCH="gfx942" \
+TORCH_DONT_CHECK_COMPILER_ABI=1 \
+CXX=hipcc \
+BUILD_WITH_HIP=1 \
+ENABLE_CXX11_ABI=1 \
+python3 -m pip install --no-build-isolation -v -e .
+```
+
 ## Getting started
 
 The best way to get started is to checkout the [Quickstart Examples](https://docs.lmcache.ai/getting_started/quickstart/) in the docs.
